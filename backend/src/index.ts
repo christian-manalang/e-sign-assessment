@@ -46,6 +46,37 @@ const app = new Elysia()
       }),
     }
   )
+  .get(
+    "/api/document/:id",
+    async ({ params, set }) => {
+      try {
+        const document = await prisma.document.findUnique({
+          where: { id: params.id },
+        });
+
+        if (!document) {
+          set.status = 404;
+          return { success: false, error: "Document not found" };
+        }
+
+        return {
+          success: true,
+          document: {
+            id: document.id,
+            filename: document.filename,
+            senderEmail: document.senderEmail,
+            signerEmail: document.signerEmail,
+            status: document.status,
+            pdfBase64: Buffer.from(document.pdfData).toString("base64"), 
+          },
+        };
+      } catch (error) {
+        console.error("Fetch error:", error);
+        set.status = 500;
+        return { success: false, error: "Failed to fetch document" };
+      }
+    }
+  )
   .listen(3000);
 
 console.log(
