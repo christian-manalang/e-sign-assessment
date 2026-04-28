@@ -1,0 +1,18 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Document {
+  id           String   @id @default(uuid())
+  filename     String
+  pdfData      Bytes    
+  senderEmail  String
+  signerEmail  String
+  status       String   @default("PENDING")
+  createdAt    DateTime @default(now())
+  signedAt     DateTime?
+}
