@@ -2,10 +2,12 @@ import { Elysia, t } from "elysia";
 import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { Resend } from "resend";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const app = new Elysia()
   .post(
@@ -27,10 +29,20 @@ const app = new Elysia()
           },
         });
 
+        const signLink = `http://localhost:5173/sign/${document.id}`;
+
+        await resend.emails.send({
+          from: "onboarding@resend.dev",
+          to: signerEmail,
+          subject: "Signature Requested: " + file.name,
+          html: `<p>${senderEmail} has requested your signature.</p>
+                 <p><a href="${signLink}">Click here to sign the document</a></p>`,
+        });
+
         return {
           success: true,
           documentId: document.id,
-          message: "Document uploaded successfully",
+          message: "Document uploaded and email sent successfully",
         };
       } catch (error) {
         console.error("Upload error:", error);
