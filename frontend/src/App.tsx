@@ -1,11 +1,13 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import UploadPage from './pages/UploadPage';
+import SignPage from './pages/SignPage';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<UploadPage />} />
+        <Route path="/sign/:id" element={<SignPage />} /> 
       </Routes>
     </BrowserRouter>
   );
