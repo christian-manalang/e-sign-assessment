@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Resend } from "resend";
+import { cors } from "@elysiajs/cors";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -10,6 +11,7 @@ const prisma = new PrismaClient({ adapter });
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const app = new Elysia()
+  .use(cors())
   .post(
     "/api/request",
     async ({ body, set }) => {
