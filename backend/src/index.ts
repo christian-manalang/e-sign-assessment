@@ -18,7 +18,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const app = new Elysia()
+export const app = new Elysia()
   .use(cors())
   .post(
     "/api/request",
