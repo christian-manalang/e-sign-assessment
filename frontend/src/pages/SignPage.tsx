@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import SignatureCanvas from 'react-signature-canvas';
-import { PenTool, CheckCircle, Loader2, Type, Upload, Trash2, Download, MousePointer2, X, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CheckCircle, Loader2, Upload, Trash2, Download, MousePointer2, X, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Document, Page } from 'react-pdf';
 import Draggable from 'react-draggable';
@@ -81,7 +81,6 @@ export default function SignPage() {
   const { id } = useParams<{ id: string }>();
   const [doc, setDoc] = useState<DocumentData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [signed, setSigned] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -109,10 +108,10 @@ export default function SignPage() {
           setDoc(data.document);
           if (data.document.status === 'SIGNED') setSigned(true);
         } else {
-          setError('Document not found.');
+          toast.error('Document not found.');
         }
       } catch (err) {
-        setError('Failed to load document.');
+        toast.error('Failed to load document.');
       } finally {
         setLoading(false);
       }
