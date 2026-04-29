@@ -103,7 +103,7 @@ export default function SignPage() {
   useEffect(() => {
     const fetchDocument = async () => {
       try {
-        const response = await fetch(`http://localhost:3000/api/document/${id}`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/document/${id}`);
         const data = await response.json();
         if (data.success) {
           setDoc(data.document);
@@ -198,7 +198,7 @@ export default function SignPage() {
           renderedWidth: pdfContainerRef.current?.offsetWidth || 500
         }))
       };
-      const response = await fetch(`http://localhost:3000/api/sign/${id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/sign/${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -217,7 +217,7 @@ export default function SignPage() {
 
   const handleDownload = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/api/document/${id}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/document/${id}`);
       const data = await response.json();
       if (data.success && data.document.pdfBase64) {
         const byteCharacters = atob(data.document.pdfBase64);
