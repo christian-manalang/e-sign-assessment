@@ -39,7 +39,7 @@ const app = new Elysia()
           },
         });
 
-        const signLink = `http://localhost:5173/sign/${document.id}`;
+        const signLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/sign/${document.id}`;
 
         await transporter.sendMail({
           from: `"E-Sign Service" <${process.env.GMAIL_USER}>`,
@@ -113,7 +113,16 @@ const app = new Elysia()
     "/api/sign/:id",
     async ({ params, body, set }) => {
       try {
-        const { signatureBase64 } = body as { signatureBase64: string };
+        const { signatures } = body as { 
+          signatures: Array<{
+            image: string;
+            x: number;
+            y: number;
+            scale: number;
+            pageNumber: number;
+            renderedWidth: number;
+          }> 
+        };
 
         const document = await prisma.document.findUnique({
           where: { id: params.id },
@@ -125,22 +134,35 @@ const app = new Elysia()
         }
 
         const pdfDoc = await PDFDocument.load(document.pdfData);
-        
-        const base64Data = signatureBase64.replace(/^data:image\/png;base64,/, "");
-        const signatureImageBytes = Buffer.from(base64Data, 'base64');
-        const pngImage = await pdfDoc.embedPng(signatureImageBytes);
-
         const pages = pdfDoc.getPages();
-        const lastPage = pages[pages.length - 1];
 
-        const pngDims = pngImage.scale(0.5);
+        for (const sig of signatures) {
+          const base64Data = sig.image.replace(/^data:image\/png;base64,/, "");
+          const signatureImageBytes = Buffer.from(base64Data, 'base64');
+          const pngImage = await pdfDoc.embedPng(signatureImageBytes);
 
-        lastPage.drawImage(pngImage, {
-          x: 50,
-          y: 50,
-          width: pngDims.width,
-          height: pngDims.height,
-        });
+          const targetPage = pages[sig.pageNumber - 1]; 
+          if (!targetPage) continue; 
+
+          const { width: pdfWidth, height: pdfHeight } = targetPage.getSize();
+          
+          const validRenderedWidth = sig.renderedWidth > 0 ? sig.renderedWidth : 500;
+          const scaleRatio = pdfWidth / validRenderedWidth;
+          
+          const targetHeightOnPdf = 48 * sig.scale * scaleRatio;
+          const requiredScale = targetHeightOnPdf / pngImage.height;
+          const pngDims = pngImage.scale(requiredScale);
+
+          const pdfX = sig.x * scaleRatio;
+          const pdfY = pdfHeight - (sig.y * scaleRatio) - pngDims.height;
+
+          targetPage.drawImage(pngImage, {
+            x: pdfX,
+            y: pdfY,
+            width: pngDims.width,
+            height: pngDims.height,
+          });
+        }
 
         const signedPdfBytes = await pdfDoc.save();
         const signedBuffer = Buffer.from(signedPdfBytes);
