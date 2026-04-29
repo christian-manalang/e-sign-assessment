@@ -49,76 +49,80 @@ export default function UploadPage() {
 
   if (status === 'success') {
     return (
-      <div style={styles.container}>
-        <div style={styles.card}>
-          <CheckCircle size={64} color="green" />
-          <h2>Success!</h2>
-          <p>The document has been uploaded and an email has been sent to the signer.</p>
-          <button onClick={() => window.location.reload()} style={styles.button}>Send Another</button>
+      <div className="min-h-screen flex items-center justify-center bg-zinc-50 p-4 font-sans">
+        <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md text-center border border-zinc-100">
+          <CheckCircle className="mx-auto mb-4 text-green-500" size={64} />
+          <h2 className="text-2xl font-bold text-zinc-900 mb-2">Success!</h2>
+          <p className="text-zinc-500 mb-6">The document has been uploaded and an email has been sent to the signer.</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="w-full py-3 px-4 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg font-medium transition-colors"
+          >
+            Send Another
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h1>Request a Signature</h1>
+    <div className="min-h-screen flex items-center justify-center bg-zinc-50 p-4 font-sans">
+      <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md border border-zinc-100">
+        <h1 className="text-2xl font-bold text-zinc-900 text-center">Request a Signature</h1>
         
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div {...getRootProps()} style={{ ...styles.dropzone, borderColor: isDragActive ? 'blue' : '#ccc' }}>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5 mt-6">
+          <div 
+            {...getRootProps()} 
+            className={`border-2 border-dashed rounded-lg p-8 cursor-pointer transition-colors duration-200 text-center flex flex-col items-center justify-center min-h-[160px]
+              ${isDragActive ? 'border-zinc-900 bg-zinc-100' : 'border-zinc-300 hover:border-zinc-400 bg-zinc-50'}`}
+          >
             <input {...getInputProps()} />
             {file ? (
-              <div style={styles.fileBox}>
+              <div className="flex flex-col items-center gap-2 text-zinc-900">
                 <FileText size={32} />
-                <p>{file.name}</p>
+                <p className="font-medium truncate max-w-xs">{file.name}</p>
               </div>
             ) : (
-              <div style={styles.fileBox}>
-                <UploadCloud size={48} color="#666" />
-                <p>Drag & drop a PDF here, or click to select</p>
+              <div className="flex flex-col items-center gap-2 text-zinc-500">
+                <UploadCloud size={40} className="text-zinc-400" />
+                <p className="text-sm">Drag & drop a PDF here, or click to select</p>
               </div>
             )}
           </div>
 
-          <input
-            type="email"
-            placeholder="Your Email (Sender)"
-            value={senderEmail}
-            onChange={(e) => setSenderEmail(e.target.value)}
-            required
-            style={styles.input}
-          />
-          
-          <input
-            type="email"
-            placeholder="Signer's Email"
-            value={signerEmail}
-            onChange={(e) => setSignerEmail(e.target.value)}
-            required
-            style={styles.input}
-          />
+          <div className="space-y-4">
+            <input
+              type="email"
+              placeholder="Your Email (Sender)"
+              value={senderEmail}
+              onChange={(e) => setSenderEmail(e.target.value)}
+              required
+              className="w-full p-3 border border-zinc-300 rounded-lg text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 transition-all"
+            />
+            
+            <input
+              type="email"
+              placeholder="Signer's Email"
+              value={signerEmail}
+              onChange={(e) => setSignerEmail(e.target.value)}
+              required
+              className="w-full p-3 border border-zinc-300 rounded-lg text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 transition-all"
+            />
+          </div>
 
           <button 
             type="submit" 
             disabled={!file || status === 'loading'} 
-            style={{...styles.button, opacity: (!file || status === 'loading') ? 0.5 : 1}}
+            className="w-full py-3 px-4 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2"
           >
             {status === 'loading' ? 'Sending...' : 'Send for Signature'}
           </button>
-          {status === 'error' && <p style={{color: 'red'}}>Something went wrong. Please try again.</p>}
+          
+          {status === 'error' && (
+            <p className="text-red-500 text-sm text-center font-medium">Something went wrong. Please try again.</p>
+          )}
         </form>
       </div>
     </div>
   );
 }
-
-const styles = {
-  container: { display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: '#f4f4f5', fontFamily: 'sans-serif' },
-  card: { backgroundColor: 'white', padding: '2rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', width: '100%', maxWidth: '500px', textAlign: 'center' as const },
-  form: { display: 'flex', flexDirection: 'column' as const, gap: '1rem', marginTop: '1.5rem' },
-  dropzone: { border: '2px dashed', borderRadius: '8px', padding: '2rem', cursor: 'pointer', backgroundColor: '#fafafa', transition: 'border 0.2s ease' },
-  fileBox: { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '0.5rem', color: '#555' },
-  input: { padding: '0.75rem', borderRadius: '6px', border: '1px solid #ccc', fontSize: '1rem' },
-  button: { padding: '0.75rem', borderRadius: '6px', border: 'none', backgroundColor: '#000', color: '#fff', fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer', marginTop: '0.5rem' }
-};

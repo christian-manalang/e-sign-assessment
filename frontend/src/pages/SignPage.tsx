@@ -107,20 +107,21 @@ export default function SignPage() {
     }
   };
 
-  if (loading) return <div style={styles.center}>Loading document...</div>;
-  if (error) return <div style={styles.center}>{error}</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-zinc-50 text-zinc-500 font-medium">Loading document...</div>;
+  if (error) return <div className="min-h-screen flex items-center justify-center bg-zinc-50 text-red-500 font-medium">{error}</div>;
   if (!doc) return null;
 
   if (signed) {
     return (
-      <div style={styles.center}>
-        <div style={styles.card}>
-          <CheckCircle size={64} color="green" style={{ marginBottom: '1rem' }} />
-          <h2 style={{ marginTop: 0 }}>Thank You!</h2>
-          <p style={{ color: '#666', marginBottom: '2rem' }}>
-            Your signature has been securely captured and applied to the document.
-          </p>
-          <button onClick={handleDownload} style={styles.signBtn}>
+      <div className="min-h-screen flex items-center justify-center bg-zinc-50 p-4 font-sans">
+        <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md text-center border border-zinc-100">
+          <CheckCircle size={64} className="mx-auto mb-4 text-green-500" />
+          <h2 className="text-2xl font-bold text-zinc-900 mb-2">Thank You!</h2>
+          <p className="text-zinc-500 mb-6">Your signature has been securely captured and applied to the document.</p>
+          <button 
+            onClick={handleDownload} 
+            className="w-full py-3 px-4 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg font-medium transition-colors"
+          >
             Download Signed Document
           </button>
         </div>
@@ -129,51 +130,49 @@ export default function SignPage() {
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.pdfSection}>
-        <h2 style={styles.title}>Review Document: {doc.filename}</h2>
-        <p style={styles.subtitle}>Requested by: {doc.senderEmail}</p>
+    <div className="flex flex-col md:flex-row h-screen bg-zinc-50 font-sans">
+      <div className="flex-[2] p-4 md:p-8 flex flex-col h-[50vh] md:h-screen">
+        <h2 className="text-xl md:text-2xl font-bold text-zinc-900 mb-1 truncate">Review Document: {doc.filename}</h2>
+        <p className="text-zinc-500 text-sm md:text-base mb-4">Requested by: {doc.senderEmail}</p>
         
         <iframe 
           src={`data:application/pdf;base64,${doc.pdfBase64}`} 
-          style={styles.iframe}
+          className="flex-1 w-full border border-zinc-200 rounded-xl shadow-sm bg-white"
           title="PDF Viewer"
         />
       </div>
 
-      <div style={styles.signSection}>
-        <div style={styles.card}>
-          <h3><PenTool size={20} style={{ marginRight: '8px', verticalAlign: 'middle' }}/> Sign Here</h3>
-          <p style={styles.subtitle}>Draw your signature in the box below.</p>
+      <div className="flex-1 p-4 md:p-8 border-t md:border-t-0 md:border-l border-zinc-200 bg-white flex flex-col justify-center h-[50vh] md:h-screen overflow-y-auto">
+        <div className="p-6 md:p-8 rounded-xl border border-zinc-100 bg-zinc-50 text-center shadow-sm">
+          <h3 className="text-lg font-bold text-zinc-900 flex items-center justify-center gap-2 mb-2">
+            <PenTool size={20} /> Sign Here
+          </h3>
+          <p className="text-zinc-500 text-sm mb-6">Draw your signature in the box below.</p>
           
-          <div style={styles.canvasContainer}>
+          <div className="border-2 border-dashed border-zinc-300 rounded-lg h-48 bg-white mb-6 relative overflow-hidden">
             <SignatureCanvas 
               ref={sigPad}
-              canvasProps={{ className: 'sigCanvas', style: { width: '100%', height: '100%' } }}
+              canvasProps={{ className: 'w-full h-full absolute inset-0' }}
             />
           </div>
           
-          <div style={styles.buttonRow}>
-            <button onClick={handleClear} style={styles.clearBtn}>Clear</button>
-            <button onClick={handleSign} style={styles.signBtn}>Submit Signature</button>
+          <div className="flex gap-3">
+            <button 
+              onClick={handleClear} 
+              className="flex-1 py-3 px-4 rounded-lg border border-zinc-200 bg-white text-zinc-700 font-medium hover:bg-zinc-100 transition-colors"
+            >
+              Clear
+            </button>
+            <button 
+              onClick={handleSign} 
+              disabled={loading}
+              className="flex-[2] py-3 px-4 rounded-lg bg-zinc-900 text-white font-medium hover:bg-zinc-800 transition-colors disabled:opacity-50"
+            >
+              Submit Signature
+            </button>
           </div>
         </div>
       </div>
     </div>
   );
 }
-
-const styles = {
-  center: { display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', fontFamily: 'sans-serif' },
-  container: { display: 'flex', flexDirection: 'row' as const, height: '100vh', backgroundColor: '#f4f4f5', fontFamily: 'sans-serif' },
-  pdfSection: { flex: 2, padding: '2rem', display: 'flex', flexDirection: 'column' as const },
-  signSection: { flex: 1, padding: '2rem', borderLeft: '1px solid #ddd', backgroundColor: '#fff', display: 'flex', flexDirection: 'column' as const, justifyContent: 'center' },
-  title: { margin: '0 0 0.5rem 0' },
-  subtitle: { color: '#666', margin: '0 0 1.5rem 0' },
-  iframe: { flex: 1, width: '100%', border: '1px solid #ccc', borderRadius: '8px' },
-  card: { padding: '2rem', borderRadius: '12px', border: '1px solid #eaeaea', backgroundColor: '#fafafa', textAlign: 'center' as const },
-  canvasContainer: { border: '2px dashed #ccc', borderRadius: '8px', height: '200px', backgroundColor: '#fff', marginBottom: '1rem' },
-  buttonRow: { display: 'flex', gap: '1rem', justifyContent: 'space-between' },
-  clearBtn: { flex: 1, padding: '0.75rem', borderRadius: '6px', border: '1px solid #ccc', backgroundColor: '#fff', cursor: 'pointer', fontWeight: 'bold' },
-  signBtn: { flex: 2, padding: '0.75rem', borderRadius: '6px', border: 'none', backgroundColor: '#000', color: '#fff', cursor: 'pointer', fontWeight: 'bold' }
-};
