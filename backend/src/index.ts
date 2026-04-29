@@ -1,3 +1,13 @@
+/**
+ * NOTE:
+ * Nodemailer email functionality is fully implemented but currently disabled in this production build.
+ * * Reason: The backend is hosted on Render's Free Tier, which strictly blocks outbound 
+ * SMTP traffic on ports 25, 465, and 587 to prevent spam. Attempting to connect to 
+ * smtp.gmail.com results in an immediate ECONNREFUSED or a 120-second connection timeout.
+ * * For this live demonstration, email sending is simulated via console.log so the core
+ * database and PDF manipulation features can be evaluated without network hanging.
+ */
+
 import { Elysia, t } from "elysia";
 import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
@@ -46,7 +56,11 @@ export const app = new Elysia()
 
         const signLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/sign/${document.id}`;
 
-        await transporter.sendMail({
+        // SIMULATED EMAIL TO BYPASS RENDER FREE TIER BLOCK
+        console.log(`[SIMULATED EMAIL] Signature requested sent to: ${signerEmail}`);
+        console.log(`[SIMULATED EMAIL] Sign Link: ${signLink}`);
+        
+        /* await transporter.sendMail({
           from: `"E-Sign Service" <${process.env.GMAIL_USER}>`,
           to: signerEmail,
           subject: "Signature Requested: " + file.name,
@@ -63,11 +77,12 @@ export const app = new Elysia()
             </div>
           `,
         });
+        */
 
         return {
           success: true,
           documentId: document.id,
-          message: "Document uploaded and email sent successfully",
+          message: "Document uploaded successfully (Email simulated)",
         };
       } catch (error) {
         console.error("Upload error:", error);
@@ -181,6 +196,10 @@ export const app = new Elysia()
           },
         });
 
+        // SIMULATED EMAIL TO BYPASS RENDER FREE TIER BLOCK
+        console.log(`[SIMULATED EMAIL] Completion notice sent to: ${document.senderEmail}`);
+
+        /*
         await transporter.sendMail({
           from: `"E-Sign Service" <${process.env.GMAIL_USER}>`,
           to: document.senderEmail,
@@ -193,8 +212,9 @@ export const app = new Elysia()
             </div>
           `,
         });
+        */
 
-        return { success: true, message: "Document signed successfully!" };
+        return { success: true, message: "Document signed successfully! (Email simulated)" };
       } catch (error) {
         console.error("Signing error:", error);
         set.status = 500;
