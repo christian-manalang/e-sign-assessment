@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { UploadCloud, FileText, CheckCircle } from 'lucide-react';
+import { UploadCloud, FileText, CheckCircle, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -25,6 +26,7 @@ export default function UploadPage() {
     if (!file || !senderEmail || !signerEmail) return;
 
     setStatus('loading');
+    const loadingToast = toast.loading('Uploading and sending document...');
     
     const formData = new FormData();
     formData.append('file', file);
@@ -38,11 +40,14 @@ export default function UploadPage() {
       });
 
       if (response.ok) {
+        toast.success('Request sent successfully!', { id: loadingToast });
         setStatus('success');
       } else {
+        toast.error('Upload failed. Please check the file and try again.', { id: loadingToast });
         setStatus('error');
       }
     } catch (err) {
+      toast.error('Network error. Is the backend running?', { id: loadingToast });
       setStatus('error');
     }
   };
@@ -113,9 +118,14 @@ export default function UploadPage() {
           <button 
             type="submit" 
             disabled={!file || status === 'loading'} 
-            className="w-full py-3 px-4 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+            className="w-full py-3 px-4 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2 flex items-center justify-center gap-2"
           >
-            {status === 'loading' ? 'Sending...' : 'Send for Signature'}
+            {status === 'loading' ? (
+              <>
+                <Loader2 className="animate-spin" size={20} />
+                Sending...
+              </>
+            ) : 'Send for Signature'}
           </button>
           
           {status === 'error' && (

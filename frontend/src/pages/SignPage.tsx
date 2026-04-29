@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import SignatureCanvas from 'react-signature-canvas';
-import { PenTool, CheckCircle } from 'lucide-react';
+import { PenTool, CheckCircle, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface DocumentData {
   id: string;
@@ -18,6 +19,7 @@ export default function SignPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [signed, setSigned] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const sigPad = useRef<SignatureCanvas>(null);
 
@@ -48,11 +50,12 @@ export default function SignPage() {
 
   const handleSign = async () => {
     if (sigPad.current?.isEmpty()) {
-      alert('Please provide a signature first.');
+      toast.error('Please provide a signature first.');
       return;
     }
 
-    setLoading(true);
+    setIsSubmitting(true);
+    const signingToast = toast.loading('Stamping document...');
 
     try {
       const signatureBase64 = sigPad.current?.getCanvas().toDataURL('image/png');
@@ -68,18 +71,20 @@ export default function SignPage() {
       const data = await response.json();
 
       if (data.success) {
+        toast.success('Document signed successfully!', { id: signingToast });
         setSigned(true);
       } else {
-        setError('Failed to apply signature to the document.');
+        toast.error('Failed to apply signature.', { id: signingToast });
       }
     } catch (err) {
-      setError('An error occurred while submitting your signature.');
+      toast.error('An error occurred during submission.', { id: signingToast });
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   const handleDownload = async () => {
+    const downloadToast = toast.loading('Preparing your PDF...');
     try {
       const response = await fetch(`http://localhost:3000/api/document/${id}`);
       const data = await response.json();
@@ -99,15 +104,24 @@ export default function SignPage() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        toast.success('Download started!', { id: downloadToast });
       } else {
-        alert('Could not retrieve the signed document.');
+        toast.error('Could not retrieve the file.', { id: downloadToast });
       }
     } catch (err) {
-      alert('Error downloading document.');
+      toast.error('Error downloading document.', { id: downloadToast });
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-zinc-50 text-zinc-500 font-medium">Loading document...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-50 text-zinc-500 gap-3">
+        <Loader2 className="animate-spin" size={40} />
+        <p className="font-medium">Loading document...</p>
+      </div>
+    );
+  }
+
   if (error) return <div className="min-h-screen flex items-center justify-center bg-zinc-50 text-red-500 font-medium">{error}</div>;
   if (!doc) return null;
 
@@ -120,7 +134,7 @@ export default function SignPage() {
           <p className="text-zinc-500 mb-6">Your signature has been securely captured and applied to the document.</p>
           <button 
             onClick={handleDownload} 
-            className="w-full py-3 px-4 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg font-medium transition-colors"
+            className="w-full py-3 px-4 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
           >
             Download Signed Document
           </button>
@@ -130,9 +144,9 @@ export default function SignPage() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-zinc-50 font-sans">
+    <div className="flex flex-col md:flex-row h-screen bg-zinc-50 font-sans text-zinc-900">
       <div className="flex-[2] p-4 md:p-8 flex flex-col h-[50vh] md:h-screen">
-        <h2 className="text-xl md:text-2xl font-bold text-zinc-900 mb-1 truncate">Review Document: {doc.filename}</h2>
+        <h2 className="text-xl md:text-2xl font-bold mb-1 truncate">Review Document: {doc.filename}</h2>
         <p className="text-zinc-500 text-sm md:text-base mb-4">Requested by: {doc.senderEmail}</p>
         
         <iframe 
@@ -144,7 +158,7 @@ export default function SignPage() {
 
       <div className="flex-1 p-4 md:p-8 border-t md:border-t-0 md:border-l border-zinc-200 bg-white flex flex-col justify-center h-[50vh] md:h-screen overflow-y-auto">
         <div className="p-6 md:p-8 rounded-xl border border-zinc-100 bg-zinc-50 text-center shadow-sm">
-          <h3 className="text-lg font-bold text-zinc-900 flex items-center justify-center gap-2 mb-2">
+          <h3 className="text-lg font-bold flex items-center justify-center gap-2 mb-2">
             <PenTool size={20} /> Sign Here
           </h3>
           <p className="text-zinc-500 text-sm mb-6">Draw your signature in the box below.</p>
@@ -159,16 +173,18 @@ export default function SignPage() {
           <div className="flex gap-3">
             <button 
               onClick={handleClear} 
-              className="flex-1 py-3 px-4 rounded-lg border border-zinc-200 bg-white text-zinc-700 font-medium hover:bg-zinc-100 transition-colors"
+              disabled={isSubmitting}
+              className="flex-1 py-3 px-4 rounded-lg border border-zinc-200 bg-white text-zinc-700 font-medium hover:bg-zinc-100 transition-colors disabled:opacity-50"
             >
               Clear
             </button>
             <button 
               onClick={handleSign} 
-              disabled={loading}
-              className="flex-[2] py-3 px-4 rounded-lg bg-zinc-900 text-white font-medium hover:bg-zinc-800 transition-colors disabled:opacity-50"
+              disabled={isSubmitting}
+              className="flex-[2] py-3 px-4 rounded-lg bg-zinc-900 text-white font-medium hover:bg-zinc-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              Submit Signature
+              {isSubmitting && <Loader2 className="animate-spin" size={18} />}
+              {isSubmitting ? 'Signing...' : 'Submit Signature'}
             </button>
           </div>
         </div>
