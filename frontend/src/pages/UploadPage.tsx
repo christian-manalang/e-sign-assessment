@@ -34,7 +34,7 @@ export default function UploadPage() {
     formData.append('signerEmail', signerEmail);
 
     try {
-      const response = await fetch('http://localhost:3000/api/request', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/request`, {
         method: 'POST',
         body: formData,
       });
