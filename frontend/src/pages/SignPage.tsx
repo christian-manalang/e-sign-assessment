@@ -31,6 +31,10 @@ export default function SignPage() {
         
         if (data.success) {
           setDoc(data.document);
+          
+          if (data.document.status === 'SIGNED') {
+            setSigned(true);
+          }
         } else {
           setError('Document not found or link is invalid.');
         }
@@ -126,15 +130,23 @@ export default function SignPage() {
   if (!doc) return null;
 
   if (signed) {
+    const isAlreadySigned = doc.status === 'SIGNED';
+
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-50 p-4 font-sans">
+      <div className="min-h-screen flex items-center justify-center bg-zinc-50 p-4 font-sans text-zinc-900">
         <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md text-center border border-zinc-100">
           <CheckCircle size={64} className="mx-auto mb-4 text-green-500" />
-          <h2 className="text-2xl font-bold text-zinc-900 mb-2">Thank You!</h2>
-          <p className="text-zinc-500 mb-6">Your signature has been securely captured and applied to the document.</p>
+          <h2 className="text-2xl font-bold mb-2">
+            {isAlreadySigned ? 'Document Signed' : 'Thank You!'}
+          </h2>
+          <p className="text-zinc-500 mb-6 text-sm">
+            {isAlreadySigned 
+              ? 'This document was previously signed and is available for download.' 
+              : 'Your signature has been securely captured and applied to the document.'}
+          </p>
           <button 
             onClick={handleDownload} 
-            className="w-full py-3 px-4 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 px-4 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg font-medium transition-colors"
           >
             Download Signed Document
           </button>
@@ -148,7 +160,7 @@ export default function SignPage() {
       <div className="flex-[2] p-4 md:p-8 flex flex-col h-[50vh] md:h-screen">
         <h2 className="text-xl md:text-2xl font-bold mb-1 truncate">Review Document: {doc.filename}</h2>
         <p className="text-zinc-500 text-sm md:text-base mb-4">Requested by: {doc.senderEmail}</p>
-        
+
         <iframe 
           src={`data:application/pdf;base64,${doc.pdfBase64}`} 
           className="flex-1 w-full border border-zinc-200 rounded-xl shadow-sm bg-white"
