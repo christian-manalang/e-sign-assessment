@@ -2,14 +2,21 @@ import { Elysia, t } from "elysia";
 import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { Resend } from "resend";
 import { cors } from "@elysiajs/cors";
 import { PDFDocument } from 'pdf-lib';
+import nodemailer from "nodemailer";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
-const resend = new Resend(process.env.RESEND_API_KEY);
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_PASS,
+  },
+});
 
 const app = new Elysia()
   .use(cors())
@@ -34,12 +41,22 @@ const app = new Elysia()
 
         const signLink = `http://localhost:5173/sign/${document.id}`;
 
-        await resend.emails.send({
-          from: "onboarding@resend.dev",
+        await transporter.sendMail({
+          from: `"E-Sign Service" <${process.env.GMAIL_USER}>`,
           to: signerEmail,
           subject: "Signature Requested: " + file.name,
-          html: `<p>${senderEmail} has requested your signature.</p>
-                 <p><a href="${signLink}">Click here to sign the document</a></p>`,
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px;">
+              <h2>Signature Requested</h2>
+              <p><strong>${senderEmail}</strong> has requested your signature on <strong>${file.name}</strong>.</p>
+              <p style="margin: 30px 0;">
+                <a href="${signLink}" style="background: #18181b; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                  Review & Sign Document
+                </a>
+              </p>
+              <p style="font-size: 12px; color: #666;">If the button doesn't work, copy this link: ${signLink}</p>
+            </div>
+          `,
         });
 
         return {
@@ -115,7 +132,7 @@ const app = new Elysia()
 
         const pages = pdfDoc.getPages();
         const lastPage = pages[pages.length - 1];
-        
+
         const pngDims = pngImage.scale(0.5);
 
         lastPage.drawImage(pngImage, {
@@ -137,11 +154,17 @@ const app = new Elysia()
           },
         });
 
-        await resend.emails.send({
-          from: "onboarding@resend.dev", 
+        await transporter.sendMail({
+          from: `"E-Sign Service" <${process.env.GMAIL_USER}>`,
           to: document.senderEmail,
           subject: "Document Signed: " + document.filename,
-          html: `<p>Great news! ${document.signerEmail} has securely signed your document.</p>`,
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px;">
+              <h2 style="color: #10b981;">Success!</h2>
+              <p>Your document <strong>${document.filename}</strong> has been signed by <strong>${document.signerEmail}</strong>.</p>
+              <p>You can now download the completed version from your dashboard.</p>
+            </div>
+          `,
         });
 
         return { success: true, message: "Document signed successfully!" };
