@@ -4,6 +4,7 @@ import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Resend } from "resend";
 import { cors } from "@elysiajs/cors";
+import { PDFDocument } from 'pdf-lib';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -88,6 +89,66 @@ const app = new Elysia()
         console.error("Fetch error:", error);
         set.status = 500;
         return { success: false, error: "Failed to fetch document" };
+      }
+    }
+  )
+  .post(
+    "/api/sign/:id",
+    async ({ params, body, set }) => {
+      try {
+        const { signatureBase64 } = body as { signatureBase64: string };
+
+        const document = await prisma.document.findUnique({
+          where: { id: params.id },
+        });
+
+        if (!document) {
+          set.status = 404;
+          return { success: false, error: "Document not found" };
+        }
+
+        const pdfDoc = await PDFDocument.load(document.pdfData);
+        
+        const base64Data = signatureBase64.replace(/^data:image\/png;base64,/, "");
+        const signatureImageBytes = Buffer.from(base64Data, 'base64');
+        const pngImage = await pdfDoc.embedPng(signatureImageBytes);
+
+        const pages = pdfDoc.getPages();
+        const lastPage = pages[pages.length - 1];
+        
+        const pngDims = pngImage.scale(0.5);
+
+        lastPage.drawImage(pngImage, {
+          x: 50,
+          y: 50,
+          width: pngDims.width,
+          height: pngDims.height,
+        });
+
+        const signedPdfBytes = await pdfDoc.save();
+        const signedBuffer = Buffer.from(signedPdfBytes);
+
+        await prisma.document.update({
+          where: { id: params.id },
+          data: {
+            pdfData: signedBuffer,
+            status: "SIGNED",
+            signedAt: new Date(),
+          },
+        });
+
+        await resend.emails.send({
+          from: "onboarding@resend.dev", 
+          to: document.senderEmail,
+          subject: "Document Signed: " + document.filename,
+          html: `<p>Great news! ${document.signerEmail} has securely signed your document.</p>`,
+        });
+
+        return { success: true, message: "Document signed successfully!" };
+      } catch (error) {
+        console.error("Signing error:", error);
+        set.status = 500;
+        return { success: false, error: "Failed to sign document" };
       }
     }
   )

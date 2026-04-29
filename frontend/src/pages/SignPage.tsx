@@ -52,11 +52,59 @@ export default function SignPage() {
       return;
     }
 
-    const signatureBase64 = sigPad.current?.getCanvas().toDataURL('image/png');
-    
-    console.log("Captured Signature:", signatureBase64);
-    
-    setSigned(true);
+    setLoading(true);
+
+    try {
+      const signatureBase64 = sigPad.current?.getCanvas().toDataURL('image/png');
+      
+      const response = await fetch(`http://localhost:3000/api/sign/${id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ signatureBase64 }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSigned(true);
+      } else {
+        setError('Failed to apply signature to the document.');
+      }
+    } catch (err) {
+      setError('An error occurred while submitting your signature.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/document/${id}`);
+      const data = await response.json();
+      
+      if (data.success && data.document.pdfBase64) {
+        const byteCharacters = atob(data.document.pdfBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `signed_${data.document.filename}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        alert('Could not retrieve the signed document.');
+      }
+    } catch (err) {
+      alert('Error downloading document.');
+    }
   };
 
   if (loading) return <div style={styles.center}>Loading document...</div>;
@@ -67,9 +115,14 @@ export default function SignPage() {
     return (
       <div style={styles.center}>
         <div style={styles.card}>
-          <CheckCircle size={64} color="green" />
-          <h2>Thank You!</h2>
-          <p>Your signature has been securely captured.</p>
+          <CheckCircle size={64} color="green" style={{ marginBottom: '1rem' }} />
+          <h2 style={{ marginTop: 0 }}>Thank You!</h2>
+          <p style={{ color: '#666', marginBottom: '2rem' }}>
+            Your signature has been securely captured and applied to the document.
+          </p>
+          <button onClick={handleDownload} style={styles.signBtn}>
+            Download Signed Document
+          </button>
         </div>
       </div>
     );
