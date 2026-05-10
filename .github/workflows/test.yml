@@ -51,6 +51,6 @@ jobs:
         working-directory: ./backend
         env:
           DATABASE_URL: "postgresql://user:password@localhost:5432/esign_test?sslmode=disable"
-          GMAIL_USER: "test@gmail.com"
-          GMAIL_PASS: "test-pass"
+          RESEND_API_KEY: "re_test_mock_key"
+          FRONTEND_URL: "http://localhost:5173"
         run: bun test

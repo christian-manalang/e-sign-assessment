@@ -22,6 +22,9 @@ A high-performance, full-stack e-signature platform built with the modern **Bun*
 | **Email**          | **Resend** (HTTP API Integration)           |
 | **Testing**        | **bun:test** + GitHub Actions (CI/CD)             |
 
+> [!NOTE]
+> **Email Demo Limitation:** This project currently uses the Resend **Onboarding Domain**. During this demonstration phase, automated emails (signature requests and completion notices) will **only** be delivered to the developer's registered email address. To enable delivery to any recipient, a custom domain must be verified in the Resend dashboard.
+
 ## Key Features
 
 ### 1. Interactive Multi-Page Signing
