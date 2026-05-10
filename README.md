@@ -19,7 +19,7 @@ A high-performance, full-stack e-signature platform built with the modern **Bun*
 | **Frontend**       | **React (Vite)** + TypeScript + Tailwind CSS      |
 | **Database**       | **Neon** (Serverless PostgreSQL) + **Prisma ORM** |
 | **PDF Processing** | **pdf-lib** (Low-level PDF manipulation)          |
-| **Email**          | **Nodemailer** (Gmail SMTP Integration)           |
+| **Email**          | **Resend** (HTTP API Integration)           |
 | **Testing**        | **bun:test** + GitHub Actions (CI/CD)             |
 
 ## Key Features
@@ -47,7 +47,7 @@ Signers can provide their signature through three different modes:
 
 ## Architecture & Workflow
 
-1.  **The Request:** Sender uploads a PDF. The backend stores the file in Neon and sends a secure email via Gmail SMTP.
+1.  **The Request:** Sender uploads a PDF. The backend stores the file in Neon and sends a secure email via Resend HTTP API.
 2.  **The Interaction:** The Signer opens the Vercel link. The frontend fetches the PDF from Render and renders it using `react-pdf`.
 3.  **The Stamp:** Upon signing, the backend uses `pdf-lib` to embed the signature image(s) onto the correct pages and coordinates.
 4.  **Completion:** The document status is updated to `SIGNED`, and the final PDF is dispatched.
@@ -75,7 +75,7 @@ cd backend
 bun install
 
 # Configure environment variables in .env:
-# DATABASE_URL, GMAIL_USER, and GMAIL_PASS
+# DATABASE_URL, RESEND_API_KEY, and FRONTEND_URL
 
 bunx prisma db push
 bun src/index.ts
